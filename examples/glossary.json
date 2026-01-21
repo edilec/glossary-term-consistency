@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1",
+  "terms": [
+    {
+      "term": "artifact",
+      "definition": "A file produced by a build and stored for later use.",
+      "aliases": ["build artifact"]
+    },
+    {
+      "term": "charge",
+      "definition": "An amount of money billed to a customer account."
+    },
+    {
+      "term": "token",
+      "definition": "A short-lived credential that authorises an API request."
+    }
+  ],
+  "discouragedAliases": [
+    {
+      "alias": "artefact",
+      "prefer": "artifact",
+      "reason": "The handbook uses the US spelling throughout."
+    },
+    {
+      "alias": "api key",
+      "prefer": "token",
+      "reason": "Access is granted by short-lived tokens, never by a static key."
+    }
+  ],
+  "scopes": [
+    {
+      "id": "physics",
+      "paths": ["clean/physics", "broken/physics"]
+    }
+  ],
+  "exceptions": [
+    {
+      "term": "charge",
+      "scope": "physics",
+      "definition": "A property of matter that causes it to experience a force in an electromagnetic field.",
+      "reason": "The physics explainers use the electrostatic sense; the billing sense does not apply to them."
+    }
+  ]
+}

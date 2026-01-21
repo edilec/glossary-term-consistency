@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "caseSensitive": false,
+  "similarityThreshold": 0.5,
+  "limits": {
+    "maxDocuments": 50,
+    "maxFileBytes": 262144,
+    "maxLines": 5000,
+    "maxTerms": 200,
+    "maxOccurrencesPerTerm": 200,
+    "maxFindings": 200,
+    "timeLimitMs": 5000
+  }
+}
