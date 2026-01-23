@@ -116,7 +116,6 @@ export function checkCorpus({
     }
   }
   const keyOf = (label) => keyToTerm.get(normalizeKey(label, caseSensitive))
-  const termByName = new Map(glossary.terms.map((entry) => [entry.term, entry]))
   const exceptionByPair = new Map(glossary.exceptions.map((entry) => [pairKey(entry.term, entry.scope), entry]))
 
   const glossaryLines = locateLines(
@@ -139,10 +138,12 @@ export function checkCorpus({
   let scanned = 0
   let definitionCount = 0
   let aliasHitCount = 0
+  let stopped = false
 
   for (const document of documents) {
     if (outOfTime()) {
       incomplete = true
+      stopped = true
       findings.push(
         makeFinding(
           'limit-exceeded',
@@ -218,9 +219,11 @@ export function checkCorpus({
   for (const finding of aliasFindings) findings.push(finding)
 
   for (const term of glossary.terms) {
+    if (stopped) break
     if (overLimit.has(term.term)) continue
     if (outOfTime()) {
       incomplete = true
+      stopped = true
       findings.push(
         makeFinding(
           'limit-exceeded',
@@ -317,6 +320,7 @@ export function checkCorpus({
   }
 
   for (const exception of glossary.exceptions) {
+    if (stopped) break
     if (exercisedSenses.has(pairKey(exception.term, exception.scope))) continue
     findings.push(
       makeFinding(
@@ -333,7 +337,7 @@ export function checkCorpus({
     )
   }
 
-  if (scanned > 0 && definitionCount === 0) {
+  if (!stopped && scanned > 0 && definitionCount === 0) {
     findings.push(
       makeFinding(
         'no-definitions-found',
