@@ -30,8 +30,11 @@ const LINE_PREFIX = /^[ \t]{0,8}(?:>[ \t]?)*(?:[-*+][ \t]+|\d{1,9}[.)][ \t]+)?(?
  * `label separator definition`. The separator is a colon followed by space, an
  * em or en dash, or a spaced hyphen. A hyphen without spaces on both sides is
  * not a separator, so `state-of-the-art` is never read as a definition.
+ *
+ * The `s` flag matters: a line is whatever sat between two newlines, so a
+ * U+2028 or U+2029 inside one is content rather than the end of the definition.
  */
-const DEFINITION_LINE = /^(.{1,160}?)(?::[ \t]+|[ \t]*[—–][ \t]*|[ \t]+-{1,2}[ \t]+)(\S.*)$/u
+const DEFINITION_LINE = /^(.{1,160}?)(?::[ \t]+|[ \t]*[—–][ \t]*|[ \t]+-{1,2}[ \t]+)(\S.*)$/su
 
 const EMPHASIS = /^(\*\*|__|\*|_|`+)([\s\S]*?)\1$/u
 const FENCE = /^[ \t]{0,3}(`{3,}|~{3,})/u

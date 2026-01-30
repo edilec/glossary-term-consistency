@@ -240,3 +240,17 @@ test('bytes that are not UTF-8 are incomplete, never a pass, even beside a liter
   )
   assert.equal(report.summary.checked, 1)
 })
+
+test('an absolute --glossary is reported by its basename, never as a host path', async () => {
+  const root = await temporaryCorpus({
+    'b.md': '**token**: A plastic disc used in an arcade near the pier.\n',
+  })
+  const result = runCli(['--root', '.', '--glossary', join(root, 'glossary.json'), '--json', 'a.md', 'b.md'], {
+    cwd: root,
+  })
+  assert.equal(result.status, 1)
+  const report = JSON.parse(result.stdout)
+  const offGlossary = report.findings.find((finding) => finding.ruleId === 'definition-off-glossary')
+  assert.equal(offGlossary.related.location.file, 'glossary.json')
+  assert.equal(result.stdout.includes(root), false)
+})

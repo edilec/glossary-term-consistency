@@ -373,3 +373,27 @@ test('the default limits are the ones the library exports', () => {
   const policy = parsePolicy()
   assert.deepEqual({ ...policy.limits }, { ...DEFAULT_LIMITS })
 })
+
+test('evidence is bounded and control characters are escaped, never echoed raw', () => {
+  const separator = String.fromCodePoint(0x2028)
+  const bell = String.fromCodePoint(0x07)
+  const report = run({
+    documents: [doc('a.md', `**token**: ${'a'.repeat(200)}${separator} tail${bell}`)],
+    glossary: NO_EXCEPTIONS,
+  })
+  const finding = report.findings.find((entry) => entry.ruleId === 'definition-off-glossary')
+  assert.equal(Array.from(finding.evidence).length, 146, 'the bounded excerpt plus the " [...]" marker')
+  assert.ok(finding.evidence.endsWith(' [...]'))
+  assert.equal(finding.evidence.includes(separator), false)
+  assert.equal(finding.evidence.includes(bell), false)
+})
+
+test('a control character inside the excerpt becomes escape text', () => {
+  const separator = String.fromCodePoint(0x2028)
+  const report = run({
+    documents: [doc('a.md', `**token**: one${separator}two three four five six seven`)],
+    glossary: NO_EXCEPTIONS,
+  })
+  const finding = report.findings.find((entry) => entry.ruleId === 'definition-off-glossary')
+  assert.equal(finding.evidence, '**token**: one\\u2028two three four five six seven')
+})
