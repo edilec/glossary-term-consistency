@@ -209,3 +209,26 @@ test('a key folds case and collapses whitespace unless the policy says otherwise
   assert.equal(normalizeKey('  Build   Artifact ', false), 'build artifact')
   assert.equal(normalizeKey('  Build   Artifact ', true), 'Build Artifact')
 })
+
+test('an unknown key inside a term, a scope, an alias or an exception is refused', () => {
+  const base = glossaryValue()
+  assert.throws(
+    () => parseGlossary(glossaryValue({ terms: [{ ...base.terms[0], defintion: 'typo' }] })),
+    /Unknown configuration key "defintion" in terms\[0\]/u,
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: 'physics', paths: ['physics'], recursive: true }] })),
+    /Unknown configuration key "recursive" in scopes\[0\]/u,
+  )
+  assert.throws(
+    () =>
+      parseGlossary(
+        glossaryValue({ discouragedAliases: [{ alias: 'artefact', prefer: 'artifact', why: 'typo' }] }),
+      ),
+    /Unknown configuration key "why" in discouragedAliases\[0\]/u,
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ exceptions: [{ ...base.exceptions[0], severity: 'warning' }] })),
+    /Unknown configuration key "severity" in exceptions\[0\]/u,
+  )
+})

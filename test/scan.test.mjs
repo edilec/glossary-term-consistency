@@ -39,6 +39,11 @@ test('an absolute path, a ".." segment and a repeated input are configuration er
   await assert.rejects(() => readCorpus(['../a.md'], { root }), ConfigError)
   await assert.rejects(() => readCorpus(['sub/../a.md'], { root }), ConfigError)
   await assert.rejects(() => readCorpus(['a.md', 'a.md'], { root }), ConfigError)
+  await assert.rejects(() => readCorpus(['./a.md', 'a.md'], { root }), (error) => {
+    assert.ok(error instanceof ConfigError)
+    assert.match(error.message, /is the same file as/u)
+    return true
+  })
 })
 
 test('a missing input is a reported failure, not a silent skip', async () => {

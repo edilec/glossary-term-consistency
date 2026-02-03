@@ -277,9 +277,6 @@ export async function readCorpus(files, { root = process.cwd(), limits = DEFAULT
     if (normalized.split('/').includes('..')) {
       throw new ConfigError(`Input "${given}" must not contain a ".." segment`)
     }
-    if (seen.has(normalized)) throw new ConfigError(`Input "${given}" was given more than once`)
-    seen.set(normalized, true)
-
     const candidate = resolve(realRoot, normalized)
     let real
     try {
@@ -302,6 +299,11 @@ export async function readCorpus(files, { root = process.cwd(), limits = DEFAULT
       continue
     }
     const reported = toPosix(inside)
+    const already = seen.get(real)
+    if (already !== undefined) {
+      throw new ConfigError(`Input "${given}" is the same file as "${already}"; each document may be given once`)
+    }
+    seen.set(real, given)
 
     let info
     try {
