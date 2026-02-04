@@ -326,6 +326,27 @@ test('the timeLimitMs budget is enforced against the injected clock', () => {
   assert.match(report.findings[0].message, /timeLimitMs budget of 5ms with 0 of 2 documents scanned/u)
 })
 
+test('the same budget stops the comparison phase, and that too is incomplete rather than fail', () => {
+  // The document loop finishes and the budget is reached inside the term loop.
+  // `limit-exceeded` is an error, so without the incomplete flag this run would
+  // report fail and exit 1; without the guard it would compare every term and
+  // report the stale exception instead.
+  const documents = [HANDBOOK]
+  const generous = run({ documents, policy: { limits: { timeLimitMs: 1_000 } }, clock: steppingClock(2) })
+  assert.equal(generous.status, 'pass')
+  assert.deepEqual(generous.findings.map((finding) => finding.ruleId), ['exception-unused'])
+
+  const report = run({ documents, policy: { limits: { timeLimitMs: 6 } }, clock: steppingClock(2) })
+  assert.equal(report.status, 'incomplete')
+  assert.equal(exitCodeFor(report), 2)
+  assert.equal(report.summary.checked, 1, 'the document was read; it is the comparison that stopped')
+  assert.deepEqual(report.findings.map((finding) => finding.ruleId), ['limit-exceeded'])
+  assert.match(
+    report.findings[0].message,
+    /comparison stopped at the timeLimitMs budget of 6ms before "charge" was compared/u,
+  )
+})
+
 test('findings are ordered by file, line, column, rule and then the related place', () => {
   const report = run({
     documents: [
