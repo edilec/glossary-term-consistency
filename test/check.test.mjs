@@ -368,6 +368,32 @@ test('findings are ordered by file, line, column, rule and then the related plac
   )
 })
 
+test('every string comparison is by code unit, never by locale collation', () => {
+  // 'B' is 0x42 and 'a' is 0x61, so code-unit order puts 'B' first; every
+  // common locale collation puts 'a' first. localeCompare here would make the
+  // report depend on the ICU data a Node build carries.
+  assert.equal(byCodeUnit('B', 'a'), -1)
+  assert.equal(byCodeUnit('a', 'B'), 1)
+  assert.equal(byCodeUnit('a', 'A'), 1)
+  assert.equal(byCodeUnit('a', 'a'), 0)
+  assert.deepEqual(['a', 'B', 'A', 'b'].sort(byCodeUnit), ['A', 'B', 'a', 'b'])
+})
+
+test('the reported order of two findings follows code-unit order of their files', () => {
+  const body = [
+    '**artifact**: A file produced by a build and stored for later use.',
+    'Use an artefact here.',
+  ].join('\n')
+  const report = run({ documents: [doc('a.md', body), doc('B.md', body)], glossary: NO_EXCEPTIONS })
+  assert.deepEqual(
+    report.findings.map((finding) => [finding.location.file, finding.line, finding.ruleId]),
+    [
+      ['B.md', 2, 'discouraged-alias-used'],
+      ['a.md', 2, 'discouraged-alias-used'],
+    ],
+  )
+})
+
 test('the report does not depend on the order the documents were given in', () => {
   const forwards = run({ documents: [HANDBOOK, PHYSICS, API] })
   const backwards = run({ documents: [API, PHYSICS, HANDBOOK] })
