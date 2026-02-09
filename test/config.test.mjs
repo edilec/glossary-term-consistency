@@ -84,7 +84,22 @@ test('a valid glossary parses into exactly the declared structure', () => {
 })
 
 test('a glossary with no terms is refused: it can check nothing', () => {
-  assert.throws(() => parseGlossary(glossaryValue({ terms: [] })), ConfigError)
+  // This guard is the only thing between a zero-term glossary and a vacuous
+  // green run, so the assertion names this error: asserting ConfigError alone
+  // would also be satisfied by the dangling references the fixture leaves
+  // behind when its terms are emptied.
+  assert.throws(
+    () => parseGlossary({ schemaVersion: '1', terms: [] }),
+    (error) => {
+      assert.ok(error instanceof ConfigError)
+      assert.match(error.message, /Glossary terms must be a non-empty array/u)
+      return true
+    },
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ terms: [], discouragedAliases: [], exceptions: [] })),
+    /Glossary terms must be a non-empty array/u,
+  )
 })
 
 test('an unknown glossary key is refused', () => {
@@ -146,12 +161,25 @@ test('two terms may not share a surface form', () => {
 })
 
 test('the reserved default scope may not be declared', () => {
-  assert.throws(() => parseGlossary(glossaryValue({ scopes: [{ id: 'default', paths: ['x'] }] })), ConfigError)
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: 'default', paths: ['x'] }], exceptions: [] })),
+    (error) => {
+      assert.ok(error instanceof ConfigError)
+      assert.match(error.message, /scopes\[0\]\.id "default" is reserved/u)
+      return true
+    },
+  )
 })
 
 test('a scope path may not escape the root and may not be claimed twice', () => {
-  assert.throws(() => parseGlossary(glossaryValue({ scopes: [{ id: 'a', paths: ['../outside'] }] })), ConfigError)
-  assert.throws(() => parseGlossary(glossaryValue({ scopes: [{ id: 'a', paths: ['/etc'] }] })), ConfigError)
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: 'a', paths: ['../outside'] }], exceptions: [] })),
+    /scopes\[0\]\.paths\[0\] must not contain a "\.\." segment/u,
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: 'a', paths: ['/etc'] }], exceptions: [] })),
+    /scopes\[0\]\.paths\[0\] must be a relative path inside the root/u,
+  )
   assert.throws(
     () =>
       parseGlossary(

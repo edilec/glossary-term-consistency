@@ -150,6 +150,14 @@ test('a mistyped configuration key is refused rather than ignored', async () => 
   assert.match(result.stderr, /Unknown configuration key "caseSensitve"/u)
 })
 
+test('a glossary with no terms is refused before anything is checked, never a vacuous pass', async () => {
+  const root = await temporaryCorpus({ 'glossary.json': JSON.stringify({ schemaVersion: '1', terms: [] }) })
+  const result = runCli(['--root', '.', '--glossary', 'glossary.json', '--json', 'a.md'], { cwd: root })
+  assert.equal(result.status, 2)
+  assert.equal(result.stdout, '')
+  assert.match(result.stderr, /Glossary terms must be a non-empty array/u)
+})
+
 test('an unreadable glossary is a configuration error with no report', () => {
   const result = runCli(['--root', 'examples', '--glossary', 'examples/nope.json', 'clean/handbook.md'])
   assert.equal(result.status, 2)
