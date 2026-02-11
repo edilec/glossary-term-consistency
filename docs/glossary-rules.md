@@ -159,6 +159,12 @@ are resolved against the working directory. Corpus paths are resolved against
 - A scope id matches `[a-z0-9][a-z0-9-]{0,39}`, may not be `default`, and its
   paths must be relative, must not contain `..`, and may not be claimed by two
   scopes.
+- Two scopes may not share an id, and one alias may not be discouraged twice.
+  Both are compared as keys, so under the default `caseSensitive: false` the
+  spellings `artefact` and `Artefact` are the same discouraged alias.
+- Every configured string is stored trimmed and may not be blank: a term or an
+  alias is at most 120 characters, a definition at most 2000, a reason at most
+  500 and a scope path at most 400.
 
 ### Policy
 
@@ -172,7 +178,9 @@ are resolved against the working directory. Corpus paths are resolved against
 ```
 
 `similarityThreshold` is a number in `[0, 1]`. `caseSensitive` changes both term
-lookup and alias matching.
+lookup and alias matching, and must be a boolean: `"yes"` is refused rather than
+read as `false`. `schemaVersion` is optional here, and must be `"1"` when it is
+given.
 
 ## Limits
 

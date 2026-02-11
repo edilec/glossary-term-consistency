@@ -198,6 +198,86 @@ test('a scope path may not escape the root and may not be claimed twice', () => 
   )
 })
 
+test('a scope id must be unique and must match the documented shape', () => {
+  assert.throws(
+    () =>
+      parseGlossary(
+        glossaryValue({
+          scopes: [
+            { id: 'a', paths: ['one'] },
+            { id: 'a', paths: ['two'] },
+          ],
+          exceptions: [],
+        }),
+      ),
+    /Duplicate scope id "a"/u,
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: 'Physics', paths: ['physics'] }], exceptions: [] })),
+    /scopes\[0\]\.id must match/u,
+  )
+  assert.throws(
+    () => parseGlossary(glossaryValue({ scopes: [{ id: '-lead', paths: ['physics'] }], exceptions: [] })),
+    /scopes\[0\]\.id must match/u,
+  )
+  // And the shape that is documented is accepted: an over-strict id is a
+  // refusal of a legitimate glossary.
+  const accepted = parseGlossary(glossaryValue({ scopes: [{ id: 'x-9', paths: ['physics'] }], exceptions: [] }))
+  assert.deepEqual(accepted.scopes.map((scope) => scope.id), ['x-9'])
+})
+
+test('the same discouraged alias may not be declared twice under one key', () => {
+  assert.throws(
+    () =>
+      parseGlossary(
+        glossaryValue({
+          discouragedAliases: [
+            { alias: 'artefact', prefer: 'artifact' },
+            { alias: 'Artefact', prefer: 'artifact' },
+          ],
+        }),
+      ),
+    /Duplicate discouraged alias "Artefact"/u,
+  )
+  // Under a case-sensitive policy the two spellings are different keys, so
+  // both are kept rather than refused.
+  const sensitive = parseGlossary(
+    glossaryValue({
+      discouragedAliases: [
+        { alias: 'artefact', prefer: 'artifact' },
+        { alias: 'Artefact', prefer: 'artifact' },
+      ],
+    }),
+    { caseSensitive: true },
+  )
+  assert.deepEqual(sensitive.discouragedAliases.map((entry) => entry.alias), ['artefact', 'Artefact'])
+})
+
+test('a configured string may be neither blank nor longer than its documented maximum', () => {
+  const only = (term) => glossaryValue({ terms: [term], discouragedAliases: [], exceptions: [] })
+  assert.throws(() => parseGlossary(only({ term: '   ', definition: 'A definition.' })), /terms\[0\]\.term must not be empty/u)
+  assert.throws(() => parseGlossary(only({ term: 'artifact', definition: ' ' })), /terms\[0\]\.definition must not be empty/u)
+  assert.throws(
+    () => parseGlossary(only({ term: 'a'.repeat(121), definition: 'A definition.' })),
+    /terms\[0\]\.term must be at most 120 characters/u,
+  )
+  // The maximum itself is accepted, and a padded value is stored trimmed.
+  const accepted = parseGlossary(only({ term: `  ${'a'.repeat(120)}  `, definition: 'A definition.' }))
+  assert.equal(accepted.terms[0].term, 'a'.repeat(120))
+})
+
+test('the policy schemaVersion and caseSensitive type are checked, not coerced', () => {
+  assert.throws(() => parsePolicy({ schemaVersion: '2' }), /Policy schemaVersion must be "1"/u)
+  assert.throws(() => parsePolicy({ schemaVersion: 1 }), /Policy schemaVersion must be "1"/u)
+  assert.equal(parsePolicy({ schemaVersion: '1' }).schemaVersion, '1')
+
+  // "caseSensitive": "yes" must be refused rather than read as false, which
+  // would silently run the check in the opposite mode to the one asked for.
+  assert.throws(() => parsePolicy({ caseSensitive: 'yes' }), /Policy caseSensitive must be a boolean/u)
+  assert.throws(() => parsePolicy({ caseSensitive: 1 }), /Policy caseSensitive must be a boolean/u)
+  assert.equal(parsePolicy({ caseSensitive: true }).caseSensitive, true)
+})
+
 test('the maxTerms limit is enforced against the glossary', () => {
   const terms = [
     { term: 'a', definition: 'The first letter.' },
