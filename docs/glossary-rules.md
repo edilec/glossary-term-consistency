@@ -133,6 +133,11 @@ exits 2. There is no report because the run never had a subject.
 are resolved against the working directory. Corpus paths are resolved against
 `--root` and confined to it. Unknown keys are rejected everywhere.
 
+A corpus document is decoded with `TextDecoder('utf-8', { fatal: true })`; bytes
+that do not decode are `input-not-utf8` and are not checked. Leading byte-order
+marks — `TextDecoder` removes one, a file re-encoded twice carries another — and
+CRLF line endings are removed before anything is compared.
+
 ### Glossary
 
 ```json

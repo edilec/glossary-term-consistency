@@ -85,7 +85,10 @@ Two JSON files and a list of documents:
 - **the policy** (`--config`, optional): limits, the similarity threshold, and
   case sensitivity.
 - **the corpus**: Markdown or plain text paths, given relative to `--root`, read
-  in the order given. No directory is ever walked.
+  in the order given. No directory is ever walked. A document is decoded as
+  strict UTF-8, and a leading byte-order mark and CRLF line endings are removed
+  before anything is checked, so a document written on Windows produces the
+  report its LF twin does.
 
 Unknown keys are rejected everywhere. The full schema, the rule catalog and the
 limits are in [`docs/glossary-rules.md`](./docs/glossary-rules.md).

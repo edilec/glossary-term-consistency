@@ -228,8 +228,13 @@ function toPosix(path) {
   return sep === '/' ? path : path.split(sep).join('/')
 }
 
+/**
+ * Text to lines. `TextDecoder` removes one byte-order mark, so a file that was
+ * re-encoded twice still carries one into the text; every leading mark is
+ * removed here, and a CRLF ending never becomes part of a line.
+ */
 function splitLines(text) {
-  const withoutBom = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
+  const withoutBom = text.replace(/^\ufeff+/u, '')
   return withoutBom.split('\n').map((line) => (line.endsWith('\r') ? line.slice(0, -1) : line))
 }
 

@@ -31,7 +31,10 @@ All notable changes to this project are documented in this file.
   a report;
 - strict decoding with `TextDecoder('utf-8', { fatal: true })`: encoding
   validity is never inferred from decoded text, so a file containing a literal
-  U+FFFD is checked normally and undecodable bytes are always `incomplete`;
+  U+FFFD is checked normally and undecodable bytes are always `incomplete`.
+  Every leading byte-order mark is removed — `TextDecoder` removes one, and a
+  file re-encoded twice carries another — and so is a CRLF ending, so a
+  document written on Windows is read exactly as its LF twin is;
 - enforced limits on documents, bytes, lines, glossary terms, occurrences per
   term, findings and wall-clock time, each an explicit `limit-exceeded` finding
   with status `incomplete` rather than a silent truncation;

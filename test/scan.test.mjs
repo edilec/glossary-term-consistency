@@ -92,6 +92,35 @@ test('bytes that are not UTF-8 are reported, and a literal U+FFFD is still check
   assert.equal(documents[0].lines[0], 'token: a � replacement character')
 })
 
+test('a CRLF document is read without the carriage returns, exactly like its LF twin', async () => {
+  const root = await makeTree({})
+  const body = ['**token**: A short-lived credential.', 'beta', '']
+  await writeFile(join(root, 'crlf.md'), body.join('\r\n'))
+  await writeFile(join(root, 'lf.md'), body.join('\n'))
+  const { documents, failures } = await readCorpus(['crlf.md', 'lf.md'], { root })
+  assert.deepEqual(failures, [])
+  assert.deepEqual(documents[0].lines, body)
+  assert.deepEqual(documents[0].lines, documents[1].lines)
+})
+
+test('a byte-order mark never reaches the checked text, however often the file was re-encoded', async () => {
+  // TextDecoder removes exactly one mark, so a file re-encoded twice still
+  // carries one into the decoded text.
+  const root = await makeTree({})
+  const mark = Buffer.from([0xef, 0xbb, 0xbf])
+  const body = Buffer.from('**token**: A short-lived credential.\n')
+  const files = [1, 2, 3].map((count) => `bom${count}.md`)
+  for (const [index, file] of files.entries()) {
+    await writeFile(join(root, file), Buffer.concat([...Array(index + 1).fill(mark), body]))
+  }
+  const { documents, failures } = await readCorpus(files, { root })
+  assert.deepEqual(failures, [])
+  assert.deepEqual(
+    documents.map((document) => [document.file, document.lines[0]]),
+    files.map((file) => [file, '**token**: A short-lived credential.']),
+  )
+})
+
 test('a directory given as an input is a reported failure', async () => {
   const root = await makeTree({ 'sub/a.md': 'alpha\n' })
   const { documents, failures } = await readCorpus(['sub'], { root })
