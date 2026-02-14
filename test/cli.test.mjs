@@ -262,3 +262,74 @@ test('an absolute --glossary is reported by its basename, never as a host path',
   assert.equal(offGlossary.related.location.file, 'glossary.json')
   assert.equal(result.stdout.includes(root), false)
 })
+
+/**
+ * A glossary and a policy are configuration files, and configuration files
+ * carry credentials often enough that neither may ever be echoed. The
+ * parse-failure path is where that used to break.
+ *
+ * V8 reports a JSON parse failure two ways, and one of them quotes the input
+ * back: `Unexpected token 'A', "AKIAIOSFODNN7EXAMPLE" is not valid JSON`. A
+ * file short enough to be nothing but a credential was reproduced in full by
+ * its own error message on stderr. Escaping could not repair it -- `evidenceOf`
+ * cuts from the end, and the quoted snippet is at the front.
+ *
+ * The canaries are published placeholders, never real credentials: the example
+ * key from the AWS documentation, the standard test card number that
+ * authorises nothing (with a leading letter, because the bare digits are a
+ * valid JSON number), and a host under the RFC 2606 `.invalid` reserved
+ * top-level domain. Every prefix from eight characters up is scanned on both
+ * streams: a check of the whole value alone passes for output that leaks all
+ * but the last character.
+ */
+const CANARIES = Object.freeze({
+  'AWS example access key id': 'AKIAIOSFODNN7EXAMPLE',
+  'standard test card number': 'x4111111111111111',
+  'reserved example host': 'api.example.invalid',
+  'bearer-looking token': 'Bearer-ZXhhbXBsZS10b2tlbg',
+})
+
+const MIN_PREFIX = 8
+
+test('an unparseable glossary or policy is not quoted back by its own parse error', async () => {
+  for (const [name, canary] of Object.entries(CANARIES)) {
+    for (const broken of ['glossary.json', 'policy.json']) {
+      const root = await makeTree({
+        'glossary.json': JSON.stringify(glossaryValue({ scopes: [], exceptions: [] }), null, 2),
+        'policy.json': JSON.stringify({ schemaVersion: '1' }),
+        'a.md': '**token**: A short-lived credential that authorises an API request.\n',
+        [broken]: canary,
+      })
+      const result = runCli(
+        ['--root', '.', '--glossary', 'glossary.json', '--config', 'policy.json', '--json', 'a.md'],
+        { cwd: root },
+      )
+
+      assert.equal(result.status, 2, `${broken} must really have failed to parse`)
+      assert.match(result.stderr, /is not valid JSON/u)
+
+      for (let length = MIN_PREFIX; length <= canary.length; length += 1) {
+        const prefix = canary.slice(0, length)
+        assert.equal(result.stdout.includes(prefix), false, `${name} in ${broken}: "${prefix}" reached stdout`)
+        assert.equal(result.stderr.includes(prefix), false, `${name} in ${broken}: "${prefix}" reached stderr`)
+      }
+    }
+  }
+})
+
+/**
+ * The other half of the fix: a diagnostic that says nothing is a different
+ * defect. A glossary missing one comma reports a position, a line and a column
+ * rather than a quotation, and that is what a reader needs to find the spot.
+ */
+test('a parse failure still says where the glossary went wrong', async () => {
+  const root = await makeTree({
+    'glossary.json': '{\n  "schemaVersion": "1"\n  "terms": []\n}\n',
+    'a.md': '**token**: A short-lived credential that authorises an API request.\n',
+  })
+  const result = runCli(['--root', '.', '--glossary', 'glossary.json', '--json', 'a.md'], { cwd: root })
+
+  assert.equal(result.status, 2)
+  assert.match(result.stderr, /position \d+/u)
+  assert.match(result.stderr, /line \d+ column \d+/u)
+})

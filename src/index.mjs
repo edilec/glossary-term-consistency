@@ -18,6 +18,7 @@ export {
   byCodeUnit,
   evidenceOf,
   makeFinding,
+  parseFailureDetail,
   relatedLocation,
   severityOf,
 } from './rules.mjs'

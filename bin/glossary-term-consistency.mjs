@@ -9,6 +9,7 @@ import {
   checkCorpus,
   exitCodeFor,
   formatReport,
+  parseFailureDetail,
   parseGlossary,
   parsePolicy,
   readCorpus,
@@ -88,7 +89,7 @@ async function readJson(path, what) {
   try {
     value = JSON.parse(text)
   } catch (error) {
-    throw new ConfigError(`The ${what} at "${path}" is not valid JSON: ${error.message}`)
+    throw new ConfigError(`The ${what} at "${path}" is not valid JSON: ${parseFailureDetail(error)}`)
   }
   return { text, value }
 }

@@ -104,6 +104,29 @@ export function relatedLocation({ file = null, pointer = null, line = null, colu
   return related
 }
 
+/**
+ * Say why a document would not parse, without reproducing any of it.
+ *
+ * V8 reports a JSON parse failure two ways, and one of them quotes the input
+ * back: `Unexpected token 'A', "AKIAIOSFODNN7EXAMPLE" is not valid JSON`. A
+ * glossary or policy file short enough to be nothing but a credential is
+ * therefore reproduced in full by its own error message. Escaping does not
+ * help: `evidenceOf` escapes control characters and cuts from the END, and the
+ * quoted snippet sits at the FRONT.
+ *
+ * The position is the useful half and carries no content, so it is kept; the
+ * quoted half is the input and never leaves this function.
+ */
+export function parseFailureDetail(error) {
+  const message = String(error?.message ?? 'could not be parsed')
+  const position = /at position \d+(?: \(line \d+ column \d+\))?/.exec(message)
+  if (position !== null) return message.slice(0, position.index + position[0].length)
+  const token = /^Unexpected token (.+?), ".*?"(?:\.\.\.)? is not valid JSON$/s.exec(message)
+  if (token !== null) return `unexpected token ${token[1]} at the start of the document`
+  if (/^Unexpected end of JSON input$/.test(message)) return message
+  return 'the document could not be parsed as JSON'
+}
+
 /** Sort by UTF-16 code unit. Locale collation varies with the ICU data a Node build carries. */
 export function byCodeUnit(left, right) {
   if (left === right) return 0

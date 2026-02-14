@@ -134,7 +134,11 @@ real root, so a symlink planted in the corpus cannot pull outside content into a
 report.
 
 **Input is data, never instruction.** Evidence excerpts are bounded and escaped,
-and nothing read from a document changes what the tool does.
+and nothing read from a document changes what the tool does. A glossary or
+policy that will not parse is reported by the parser's position, line and
+column, never by the snippet the parser quotes back: V8 phrases one of its two
+parse failures as `Unexpected token 'A', "..." is not valid JSON`, which
+reproduces a short file in full.
 
 ## Verify
 
