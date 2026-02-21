@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "lint": "node --check src/index.mjs && node --check src/rules.mjs && node --check src/config.mjs && node --check src/scan.mjs && node --check src/check.mjs && node --check bin/glossary-term-consistency.mjs && node --check test/helpers.mjs && node --check test/config.test.mjs && node --check test/scan.test.mjs && node --check test/check.test.mjs && node --check test/cli.test.mjs",
+    "lint": "node --check src/index.mjs && node --check src/rules.mjs && node --check src/config.mjs && node --check src/scan.mjs && node --check src/check.mjs && node --check bin/glossary-term-consistency.mjs && node --check test/helpers.mjs && node --check test/config.test.mjs && node --check test/scan.test.mjs && node --check test/check.test.mjs && node --check test/cli.test.mjs && node --check test/parse-failure.test.mjs",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**",
     "example": "node bin/glossary-term-consistency.mjs --root examples --glossary examples/glossary.json --config examples/policy.json clean/handbook.md clean/physics/notes.md",
