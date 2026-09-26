@@ -1,0 +1,51 @@
+{
+  "name": "glossary-term-consistency",
+  "version": "0.1.0",
+  "description": "Compare a canonical glossary against a document corpus: conflicting definitions, discouraged aliases and scoped exceptions, with both evidence locations.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "node --check src/index.mjs && node --check src/rules.mjs && node --check src/config.mjs && node --check src/scan.mjs && node --check src/check.mjs && node --check bin/glossary-term-consistency.mjs && node --check test/helpers.mjs && node --check test/config.test.mjs && node --check test/scan.test.mjs && node --check test/check.test.mjs && node --check test/cli.test.mjs && node --check test/parse-failure.test.mjs",
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**",
+    "example": "node bin/glossary-term-consistency.mjs --root examples --glossary examples/glossary.json --config examples/policy.json clean/handbook.md clean/physics/notes.md",
+    "pack:check": "npm pack --dry-run",
+    "check": "npm run lint && npm test && npm run example && npm run pack:check"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edilec/glossary-term-consistency.git"
+  },
+  "bin": {
+    "glossary-term-consistency": "./bin/glossary-term-consistency.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "glossary",
+    "terminology",
+    "documentation",
+    "consistency",
+    "style-guide",
+    "lint",
+    "cli"
+  ],
+  "author": "Edilec Private Limited",
+  "bugs": {
+    "url": "https://github.com/edilec/glossary-term-consistency/issues"
+  },
+  "homepage": "https://github.com/edilec/glossary-term-consistency#readme"
+}
