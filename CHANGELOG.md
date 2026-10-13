@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.1.0 — 2026-10-14
 
 ### Added
 
@@ -55,4 +55,4 @@ All notable changes to this project are documented in this file.
 - The comparison is lexical, not semantic. `README.md` states what that means
   the tool cannot conclude.
 
-No release has been published.
+GitHub source release v0.1.0 — 2026-10-14.
